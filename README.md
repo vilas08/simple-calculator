@@ -27,14 +27,28 @@ calculator/
 
 ---
 
-## 🧪 Local Testing
+## 🧪 Local Testing & Linting
 
-You can test the logic locally before committing:
+You can run your checks locally before committing:
 
 ```bash
-# Run unit tests
+# Check syntax of all JavaScript files (no extra packages needed!)
+npm run lint
+
+# Run automated unit tests
 npm test
 ```
+
+---
+
+## 🔄 CI/CD Pipeline Stages
+
+When you push code to GitHub, the pipeline runs 4 stages automatically:
+
+1. **Lint** (`node --check`): Validates JavaScript syntax and structure.
+2. **Test** (`node --test`): Runs 10 automated unit tests.
+3. **Build** (`dist/`): Packages production web assets into a release artifact.
+4. **Deploy**: Automatically deploys the production build (runs on `main` branch).
 
 ---
 

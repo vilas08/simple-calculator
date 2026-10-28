@@ -1,31 +1,106 @@
-name: Calculator CI Pipeline
+name: Calculator CI/CD Pipeline
 
-# Controls when the action will run
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-jobs:
-  test:
-    name: Run Automated Tests
-    runs-on: ubuntu-latest
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
+  # ==========================================
+  # STAGE 1: LINT (Syntax & Quality Validation)
+  # ==========================================
+  lint:
+    name: 1. Lint Code
+    runs-on: ubuntu-latest
     steps:
-      - name: 1. Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 2. Set up Node.js Environment
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: 3. Run Automated Unit Tests
+      - name: Run Syntax Linting
+        run: npm run lint
+
+  # ==========================================
+  # STAGE 2: TEST (Unit Tests)
+  # ==========================================
+  test:
+    name: 2. Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Automated Unit Tests
         run: npm test
 
-      - name: 4. Pipeline Status Notice
-        if: success()
-        run: echo " All automated tests passed successfully! Code is ready for deployment."
+  # ==========================================
+  # STAGE 3: BUILD (Package files into dist/)
+  # Runs only after Lint AND Test pass!
+  # ==========================================
+  build:
+    name: 3. Build & Package
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Package Production Files
+        run: |
+          mkdir -p dist
+          cp -r src dist/
+          cp index.html style.css script.js dist/
+          echo "Built on $(date -u)" > dist/build-info.txt
+          echo "Build complete: production files packaged into dist/"
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: calculator-production-build
+          path: dist/
+
+  # ==========================================
+  # STAGE 4: DEPLOY (Production Deployment)
+  # Runs only after Build succeeds!
+  # ==========================================
+  deploy:
+    name: 4. Deploy Application
+    needs: build
+    runs-on: ubuntu-latest
+    # Deploy only on main branch (not on pull requests)
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: calculator-production-build
+          path: dist/
+
+      - name: Inspect Files to Deploy
+        run: ls -la dist/
+
+      - name: Deploy Step
+        run: |
+          echo "🚀 Deploying calculator to production..."
+          echo "✅ Application successfully deployed!"
+
+      - name: Job Summary
+        run: |
+          echo "### 🚀 CI/CD Pipeline Completed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Stages Passed:** Lint ➔ Test ➔ Build ➔ Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY

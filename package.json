@@ -4,8 +4,8 @@
   "description": "A simple calculator built for practicing Git and CI/CD pipelines",
   "main": "src/calculator.js",
   "scripts": {
-    "test": "node --test test/calculator.test.js",
-    "start": "node src/calculator.js"
+    "lint": "node --check src/calculator.js && node --check script.js && node --check test/calculator.test.js",
+    "test": "node --test test/calculator.test.js"
   },
   "keywords": [
     "calculator",
