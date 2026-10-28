@@ -1,0 +1,18 @@
+{
+  "name": "simple-calculator",
+  "version": "1.0.0",
+  "description": "A simple calculator built for practicing Git and CI/CD pipelines",
+  "main": "src/calculator.js",
+  "scripts": {
+    "test": "node --test test/calculator.test.js",
+    "start": "node src/calculator.js"
+  },
+  "keywords": [
+    "calculator",
+    "ci-cd",
+    "github-actions",
+    "devops"
+  ],
+  "author": "vilas08",
+  "license": "MIT"
+}
